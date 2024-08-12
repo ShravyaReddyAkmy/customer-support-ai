@@ -8,6 +8,7 @@ const systemPrompt =  `You are a customer support e-books assistant, skilled in 
 export async function POST(req) {
   const openai = new OpenAI() // Create a new instance of the OpenAI client
   const data = await req.json() // Parse the JSON body of the incoming request
+  // console.log(data)
 
   // Create a chat completion request to the OpenAI API
   const completion = await openai.chat.completions.create({
@@ -24,6 +25,7 @@ export async function POST(req) {
         // Iterate over the streamed chunks of the response
         for await (const chunk of completion) {
           const content = chunk.choices[0]?.delta?.content // Extract the content from the chunk
+          // console.log("content", content)
           if (content) {
             const text = encoder.encode(content) // Encode the content to Uint8Array
             controller.enqueue(text) // Enqueue the encoded text to the stream
@@ -31,13 +33,14 @@ export async function POST(req) {
         }
         console.log("in API")
       } catch (err) {
-        console.log("here")
+        console.log("here is API resp err")
         controller.error(err) // Handle any errors that occur during streaming
       } finally {
+        console.log("closing controller stream")
         controller.close() // Close the stream when done
       }
     },
   })
-
+  console.log("returning stream response ",stream)
   return new NextResponse(stream) // Return the stream as the response
 }
